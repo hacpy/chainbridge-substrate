@@ -41,7 +41,7 @@ fn transfer_hash() {
             dest_chain,
         ));
 
-        expect_event(bridge::RawEvent::GenericTransfer(
+        expect_event(bridge::Event::GenericTransfer(
             dest_chain,
             1,
             resource_id,
@@ -66,7 +66,7 @@ fn transfer_native() {
             dest_chain,
         ));
 
-        expect_event(bridge::RawEvent::FungibleTransfer(
+        expect_event(bridge::Event::FungibleTransfer(
             dest_chain,
             1,
             resource_id,
@@ -111,7 +111,7 @@ fn transfer_erc721() {
             dest_chain,
         ));
 
-        expect_event(bridge::RawEvent::NonFungibleTransfer(
+        expect_event(bridge::Event::NonFungibleTransfer(
             dest_chain,
             1,
             resource_id,
@@ -167,7 +167,7 @@ fn execute_remark() {
             Box::new(proposal.clone())
         ));
 
-        event_exists(RawEvent::Remark(hash));
+        event_exists(Event::Remark(hash));
     })
 }
 
@@ -333,16 +333,16 @@ fn create_sucessful_transfer_proposal() {
         );
 
         assert_events(vec![
-            Event::bridge(bridge::RawEvent::VoteFor(src_id, prop_id, RELAYER_A)),
-            Event::bridge(bridge::RawEvent::VoteAgainst(src_id, prop_id, RELAYER_B)),
-            Event::bridge(bridge::RawEvent::VoteFor(src_id, prop_id, RELAYER_C)),
-            Event::bridge(bridge::RawEvent::ProposalApproved(src_id, prop_id)),
+            Event::bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_A)),
+            Event::bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
+            Event::bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
+            Event::bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
             Event::balances(balances::Event::Transfer(
                 Bridge::account_id(),
                 RELAYER_A,
                 10,
             )),
-            Event::bridge(bridge::RawEvent::ProposalSucceeded(src_id, prop_id)),
+            Event::bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
         ]);
     })
 }
