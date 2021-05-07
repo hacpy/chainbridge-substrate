@@ -4,7 +4,7 @@
 mod mock;
 mod tests;
 
-use codec::{Decode, Encode, EncodeLike};
+use codec::{Decode, Encode};
 use frame_support::{ensure};
 use sp_core::U256;
 use sp_runtime::RuntimeDebug;
@@ -69,23 +69,22 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn tokens)]
-    pub type Tokens<T: Config> = StorageMap<
+    pub(super) type Tokens<T: Config> = StorageMap<
         _,
         Blake2_256,
         TokenId,
-        Option<Erc721Token>,
-        ValueQuery
+        Erc721Token
     >;
 
     #[pallet::storage]
     #[pallet::getter(fn owner_of)]
-    pub type TokenOwner<T: Config> = StorageMap<
+    pub(super) type TokenOwner<T: Config> = StorageMap<
         _,
         Blake2_256,
         TokenId,
-        Option<T::AccountId>,
-        ValueQuery
+        T::AccountId
     >;
+
 
     #[pallet::type_value]
     pub(super) fn TokenCountDefault<T: Config>() -> U256 {
@@ -158,8 +157,8 @@ impl<T: Config> Pallet<T> {
 
         let new_token = Erc721Token { id, metadata };
 
-        <Tokens<T>>::insert(&id, new_token.into());
-        <TokenOwner<T>>::insert(&id, owner.clone().into());
+        <Tokens<T>>::insert(&id, new_token);
+        <TokenOwner<T>>::insert(&id, owner.clone());
         let new_total = <TokenCount<T>>::get().saturating_add(U256::one());
         <TokenCount<T>>::put(new_total);
 
@@ -178,7 +177,7 @@ impl<T: Config> Pallet<T> {
         let owner = Self::owner_of(id).ok_or(Error::<T>::TokenIdDoesNotExist)?;
         ensure!(owner == from, Error::<T>::NotOwner);
         // Update owner
-        <TokenOwner<T>>::insert(&id, to.clone().into());
+        <TokenOwner<T>>::insert(&id, to.clone());
 
         Self::deposit_event(Event::Transferred(from, to, id));
 

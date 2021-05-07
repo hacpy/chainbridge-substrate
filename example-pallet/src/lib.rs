@@ -15,6 +15,11 @@ use sp_std::prelude::*;
 
 pub use pallet::*;
 
+type ResourceId = bridge::ResourceId;
+
+type BalanceOf<T> =
+<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::pallet_prelude::*;
@@ -23,9 +28,9 @@ pub mod pallet {
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
-    #[pallet::metadata(T::Hash = "Hash")]
-    pub enum Event<T> {
-        Remark(T::Hash),
+    #[pallet::metadata(<T as frame_system::Config>::Hash = "Hash")]
+    pub enum Event<T: Config> {
+        Remark(<T as frame_system::Config>::Hash),
     }
 
     #[pallet::error]
@@ -34,10 +39,7 @@ pub mod pallet {
     }
 
     #[pallet::config]
-    pub trait Config: frame_system::Config {
-
-        #[pallet::constant]
-        type ResourceId: Get<bridge::ResourceId>;
+    pub trait Config: frame_system::Config + bridge::Config + erc721::Config {
 
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// Specifies the origin check provided by the bridge for calls that can only be called by the bridge pallet
@@ -60,7 +62,7 @@ pub mod pallet {
     // pub struct Pallet<T, I = ()>(PhantomData<T>); // for instantiable pallet
 
     #[pallet::hooks]
-    impl<T: Config> Hooks<BlockNumber> for Pallet<T> {
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 
     }
 
@@ -77,7 +79,7 @@ pub mod pallet {
 
             let resource_id = T::HashId::get();
             let metadata: Vec<u8> = hash.as_ref().to_vec();
-            <bridge::Module<T>>::transfer_generic(dest_id, resource_id, metadata)
+            <bridge::Pallet<T>>::transfer_generic(dest_id, resource_id, metadata)
         }
 
         /// Transfers some amount of the native token to some recipient on a (whitelisted) destination chain.
@@ -89,12 +91,12 @@ pub mod pallet {
             dest_id: bridge::ChainId
         ) -> DispatchResultWithPostInfo {
             let source = ensure_signed(origin)?;
-            ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
-            let bridge_id = <bridge::Module<T>>::account_id();
+            ensure!(<bridge::Pallet<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
+            let bridge_id = <bridge::Pallet<T>>::account_id();
             T::Currency::transfer(&source, &bridge_id, amount.into(), AllowDeath)?;
 
             let resource_id = T::NativeTokenId::get();
-            <bridge::Module<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(amount.saturated_into::<u128>()))
+            <bridge::Pallet<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(amount.saturated_into::<u128>()))
         }
 
         /// Transfer a non-fungible token (erc721) to a (whitelisted) destination chain.
@@ -106,14 +108,14 @@ pub mod pallet {
             dest_id: bridge::ChainId
         ) -> DispatchResultWithPostInfo {
             let source = ensure_signed(origin)?;
-            ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
+            ensure!(<bridge::Pallet<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
             match <erc721::Module<T>>::tokens(&token_id) {
                 Some(token) => {
                     <erc721::Module<T>>::burn_token(source, token_id)?;
                     let resource_id = T::Erc721Id::get();
                     let tid: &mut [u8] = &mut[0; 32];
                     token_id.to_big_endian(tid);
-                    <bridge::Module<T>>::transfer_nonfungible(dest_id, resource_id, tid.to_vec(), recipient, token.metadata)
+                    <bridge::Pallet<T>>::transfer_nonfungible(dest_id, resource_id, tid.to_vec(), recipient, token.metadata)
                 }
                 None => Err(Error::<T>::InvalidTransfer)?
             }
