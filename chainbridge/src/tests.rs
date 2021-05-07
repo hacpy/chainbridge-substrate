@@ -108,13 +108,13 @@ fn whitelist_chain() {
 #[test]
 fn set_get_threshold() {
     new_test_ext().execute_with(|| {
-        assert_eq!(<RelayerThreshold>::get(), 1);
+        assert_eq!(<RelayerThreshold<T>>::get(), 1);
 
         assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD));
-        assert_eq!(<RelayerThreshold>::get(), TEST_THRESHOLD);
+        assert_eq!(<RelayerThreshold<T>>::get(), TEST_THRESHOLD);
 
         assert_ok!(Bridge::set_threshold(Origin::root(), 5));
-        assert_eq!(<RelayerThreshold>::get(), 5);
+        assert_eq!(<RelayerThreshold<T>>::get(), 5);
 
         assert_events(vec![
             Event::bridge(RawEvent::RelayerThresholdChanged(TEST_THRESHOLD)),
