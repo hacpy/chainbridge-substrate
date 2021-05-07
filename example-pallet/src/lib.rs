@@ -1,3 +1,9 @@
+// Ensure we're `no_std` when compiling for Wasm.
+#![cfg_attr(not(feature = "std"), no_std)]
+
+mod mock;
+mod tests;
+
 use chainbridge as bridge;
 use example_erc721 as erc721;
 use frame_support::traits::{Currency, EnsureOrigin, ExistenceRequirement::AllowDeath, Get};
@@ -6,9 +12,6 @@ use frame_system::{self as system, ensure_signed};
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_core::U256;
 use sp_std::prelude::*;
-
-mod mock;
-mod tests;
 
 pub use pallet::*;
 
@@ -32,6 +35,7 @@ pub mod pallet {
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
+
         #[pallet::constant]
         type ResourceId: Get<bridge::ResourceId>;
 
@@ -140,14 +144,13 @@ pub mod pallet {
             r_id: ResourceId
         ) -> DispatchResultWithPostInfo {
             T::BridgeOrigin::ensure_origin(origin)?;
-            Self::deposit_event(RawEvent::Remark(hash));
             Ok(().into())
         }
 
         /// Allows the bridge to issue new erc721 tokens
         #[pallet::weight(195_000_000)]
         pub fn mint_erc721(
-            origin: Origin<T>,
+            origin: OriginFor<T>,
             recipient: T::AccountId,
             id: U256,
             metadata: Vec<u8>,
