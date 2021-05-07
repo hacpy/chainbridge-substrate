@@ -4,6 +4,8 @@
 mod mock;
 mod tests;
 
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{
@@ -620,7 +622,7 @@ pub mod pallet {
     impl<A: PartialEq, B: PartialOrd + Default> ProposalVotes<A, B> {
         /// Attempts to mark the proposal as approve or rejected.
         /// Returns true if the status changes from active.
-        fn try_to_complete(&mut self, threshold: u32, total: u32) -> ProposalStatus {
+        pub(crate) fn try_to_complete(&mut self, threshold: u32, total: u32) -> ProposalStatus {
             if self.votes_for.len() >= threshold as usize {
                 self.status = ProposalStatus::Approved;
                 ProposalStatus::Approved

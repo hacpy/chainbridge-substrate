@@ -1,19 +1,17 @@
 #![cfg(test)]
 
-use super::*;
-
 use frame_support::{assert_ok, ord_parameter_types, parameter_types, weights::Weight};
 use frame_system::{self as system};
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
     traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-    Perbill,
+    ModuleId, Perbill,
 };
 
-use crate::{self as bridge, Config};
+use crate::pallet as bridge;
+use crate::pallet::{ChainId, Config, ResourceId};
 pub use pallet_balances as balances;
-
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub const MaximumBlockWeight: Weight = 1024;
@@ -76,6 +74,7 @@ impl Config for Test {
     type Proposal = Call;
     type ChainId = TestChainId;
     type ProposalLifetime = ProposalLifetime;
+    type Call = Call;
 }
 
 pub type Block = sp_runtime::generic::Block<Header, UncheckedExtrinsic>;
@@ -87,9 +86,9 @@ frame_support::construct_runtime!(
         NodeBlock = Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
-        System: system::{Pallet, Call, Event<T>},
-        Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        Bridge: bridge::{Pallet, Call, Storage, Event<T>},
+        System: system::{Module, Call, Event<T>},
+        Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
+        Bridge: bridge::{Module, Call, Storage, Event<T>},
     }
 );
 
