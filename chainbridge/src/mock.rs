@@ -1,19 +1,17 @@
 #![cfg(test)]
 
-use super::*;
-
 use frame_support::{assert_ok, ord_parameter_types, parameter_types, weights::Weight};
 use frame_system::{self as system};
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
     traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-    Perbill,
+    ModuleId, Perbill,
 };
 
-use crate::{self as bridge, Config};
+use crate::pallet as bridge;
+use crate::pallet::{ChainId, Config, ResourceId};
 pub use pallet_balances as balances;
-
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub const MaximumBlockWeight: Weight = 1024;
@@ -76,6 +74,7 @@ impl Config for Test {
     type Proposal = Call;
     type ChainId = TestChainId;
     type ProposalLifetime = ProposalLifetime;
+    type Call = Call;
 }
 
 pub type Block = sp_runtime::generic::Block<Header, UncheckedExtrinsic>;
@@ -141,7 +140,7 @@ pub fn new_test_ext_initialized(
 // Checks events against the latest. A contiguous set of events must be provided. They must
 // include the most recent event, but do not have to include every past event.
 pub fn assert_events(mut expected: Vec<Event>) {
-    let mut actual: Vec<Event> = system::Module::<Test>::events()
+    let mut actual: Vec<Event> = system::Pallet::<Test>::events()
         .iter()
         .map(|e| e.event.clone())
         .collect();
